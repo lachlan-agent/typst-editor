@@ -1,0 +1,717 @@
+/*
+ * Theme palettes.
+ *
+ * Every theme defines the same small vocabulary — six neutrals, eight hues and
+ * an accent. Syntax roles are mapped onto those slots once, in `styles.css`,
+ * so adding a theme means choosing fifteen colours rather than restyling
+ * seventeen syntax classes.
+ *
+ * `--ink` is text, `--paper` is the surface it sits on. The preview sheet is
+ * deliberately NOT themed: it stays the colour it will print.
+ */
+
+/* Chalk — white, crisp, maximum clarity. The default light theme. */
+[data-theme="chalk"] {
+  --paper: #ffffff;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f1f3f5;
+  --rule: #dfe3e8;
+  --ink: #14171a;
+  --ink-dim: #5a626b;
+  --ink-faint: #8c949d;
+  --selection: #cfe3ff;
+
+  --c-red: #c0392b;
+  --c-orange: #b45309;
+  --c-yellow: #8a6d00;
+  --c-green: #197d4b;
+  --c-cyan: #0e7490;
+  --c-blue: #1d4ed8;
+  --c-violet: #6d28d9;
+  --c-magenta: #a21c67;
+  --accent: #1d4ed8;
+}
+
+/* Newsprint — cool grey, lower contrast, easy for long sessions. */
+[data-theme="newsprint"] {
+  --paper: #f4f5f6;
+  --paper-raised: #fafbfb;
+  --paper-sunken: #e8eaec;
+  --rule: #d7dbdf;
+  --ink: #1a1c1e;
+  --ink-dim: #565b61;
+  --ink-faint: #878d94;
+  --selection: #d3e2f7;
+
+  --c-red: #b23a32;
+  --c-orange: #a2600f;
+  --c-yellow: #7d6a12;
+  --c-green: #2a7048;
+  --c-cyan: #17697f;
+  --c-blue: #275ea8;
+  --c-violet: #6b4baf;
+  --c-magenta: #9a3670;
+  --accent: #275ea8;
+}
+
+/* Vellum — warm paper with ink-blue accents, after a printed book. */
+[data-theme="vellum"] {
+  --paper: #fbf6ec;
+  --paper-raised: #fffcf4;
+  --paper-sunken: #f1e9d9;
+  --rule: #e3d8c2;
+  --ink: #2b261e;
+  --ink-dim: #6a6052;
+  --ink-faint: #9a9080;
+  --selection: #e4dcc4;
+
+  --c-red: #a83a2c;
+  --c-orange: #9c5b14;
+  --c-yellow: #7e6512;
+  --c-green: #3f6b35;
+  --c-cyan: #2a6a6a;
+  --c-blue: #2e4a7d;
+  --c-violet: #6a4a82;
+  --c-magenta: #8e3a63;
+  --accent: #2e4a7d;
+}
+
+/* Gruvbox Light — Pavel Pertsev's warm retro palette, faded variants. */
+[data-theme="gruvbox-light"] {
+  --paper: #fbf1c7;
+  --paper-raised: #f9f5d7;
+  --paper-sunken: #f2e5bc;
+  --rule: #d5c4a1;
+  --ink: #3c3836;
+  --ink-dim: #665c54;
+  --ink-faint: #928374;
+  --selection: #d5c4a1;
+
+  --c-red: #9d0006;
+  --c-orange: #af3a03;
+  --c-yellow: #b57614;
+  --c-green: #79740e;
+  --c-cyan: #427b58;
+  --c-blue: #076678;
+  --c-violet: #8f3f71;
+  --c-magenta: #b16286;
+  --accent: #076678;
+}
+
+/* Catppuccin Latte — the light flavour of the pastel palette. */
+[data-theme="catppuccin-latte"] {
+  --paper: #eff1f5;
+  --paper-raised: #fafbfe;
+  --paper-sunken: #e6e9ef;
+  --rule: #ccd0da;
+  --ink: #4c4f69;
+  --ink-dim: #6c6f85;
+  --ink-faint: #9ca0b0;
+  --selection: #cdd9f3;
+
+  --c-red: #d20f39;
+  --c-orange: #fe640b;
+  --c-yellow: #df8e1d;
+  --c-green: #40a02b;
+  --c-cyan: #179299;
+  --c-blue: #1e66f5;
+  --c-violet: #8839ef;
+  --c-magenta: #ea76cb;
+  --accent: #1e66f5;
+}
+
+/* Rosé Pine Dawn — warm parchment, muted rose and gold. */
+[data-theme="rose-pine-dawn"] {
+  --paper: #faf4ed;
+  --paper-raised: #fffaf3;
+  --paper-sunken: #f2e9e1;
+  --rule: #dfdad9;
+  --ink: #575279;
+  --ink-dim: #797593;
+  --ink-faint: #9893a5;
+  --selection: #dcd7e8;
+
+  --c-red: #b4637a;
+  --c-orange: #d7827e;
+  --c-yellow: #ea9d34;
+  --c-green: #478567;
+  --c-cyan: #56949f;
+  --c-blue: #286983;
+  --c-violet: #907aa9;
+  --c-magenta: #b45c87;
+  --accent: #286983;
+}
+
+/* Nocturne — neutral near-black. The default dark theme. */
+[data-theme="nocturne"] {
+  --paper: #121316;
+  --paper-raised: #1a1c20;
+  --paper-sunken: #0c0d0f;
+  --rule: #2a2d33;
+  --ink: #e6e8eb;
+  --ink-dim: #9ba1a9;
+  --ink-faint: #6b717a;
+  --selection: #2c3a52;
+
+  --c-red: #ff7b72;
+  --c-orange: #ffa657;
+  --c-yellow: #e3b341;
+  --c-green: #7ee787;
+  --c-cyan: #56d4bc;
+  --c-blue: #79c0ff;
+  --c-violet: #c792ea;
+  --c-magenta: #ff7bc8;
+  --accent: #79c0ff;
+}
+
+/* Slate — blue-grey dark, a little softer than Nocturne. */
+[data-theme="slate"] {
+  --paper: #171a21;
+  --paper-raised: #1e222b;
+  --paper-sunken: #11141a;
+  --rule: #2e3441;
+  --ink: #dde3ec;
+  --ink-dim: #949dad;
+  --ink-faint: #69727f;
+  --selection: #2f3e57;
+
+  --c-red: #f2777a;
+  --c-orange: #f5a25d;
+  --c-yellow: #e6c86e;
+  --c-green: #8cd98c;
+  --c-cyan: #6bd3c6;
+  --c-blue: #7fb2f0;
+  --c-violet: #bfa0ee;
+  --c-magenta: #ee8ac6;
+  --accent: #7fb2f0;
+}
+
+/* Oxide — warm dark, brown-black with a copper accent. */
+[data-theme="oxide"] {
+  --paper: #1a1613;
+  --paper-raised: #221d19;
+  --paper-sunken: #130f0d;
+  --rule: #362e27;
+  --ink: #ede3d8;
+  --ink-dim: #a89a8b;
+  --ink-faint: #796e62;
+  --selection: #4a3a2a;
+
+  --c-red: #f07e6e;
+  --c-orange: #e8925b;
+  --c-yellow: #dfb25a;
+  --c-green: #a6c07a;
+  --c-cyan: #79bfb0;
+  --c-blue: #8fb3d9;
+  --c-violet: #c49bd1;
+  --c-magenta: #dd8aa8;
+  --accent: #e8925b;
+}
+
+/* Solarized Light — Ethan Schoonover's palette, unaltered. */
+[data-theme="solarized-light"] {
+  --paper: #fdf6e3;
+  --paper-raised: #fdf6e3;
+  --paper-sunken: #eee8d5;
+  --rule: #ded7c0;
+  --ink: #586e75;
+  --ink-dim: #657b83;
+  --ink-faint: #93a1a1;
+  --selection: #e2dac4;
+
+  --c-red: #dc322f;
+  --c-orange: #cb4b16;
+  --c-yellow: #b58900;
+  --c-green: #859900;
+  --c-cyan: #2aa198;
+  --c-blue: #268bd2;
+  --c-violet: #6c71c4;
+  --c-magenta: #d33682;
+  --accent: #268bd2;
+}
+
+/* Solarized Dark — the same hues on base03. */
+[data-theme="solarized-dark"] {
+  --paper: #002b36;
+  --paper-raised: #073642;
+  --paper-sunken: #00212b;
+  --rule: #0b4451;
+  --ink: #93a1a1;
+  --ink-dim: #839496;
+  --ink-faint: #657b83;
+  --selection: #0b4451;
+
+  --c-red: #dc322f;
+  --c-orange: #cb4b16;
+  --c-yellow: #b58900;
+  --c-green: #859900;
+  --c-cyan: #2aa198;
+  --c-blue: #268bd2;
+  --c-violet: #6c71c4;
+  --c-magenta: #d33682;
+  --accent: #268bd2;
+}
+
+/* Nord — the arctic blue-grey palette. */
+[data-theme="nord"] {
+  --paper: #2e3440;
+  --paper-raised: #3b4252;
+  --paper-sunken: #272c36;
+  --rule: #434c5e;
+  --ink: #e5e9f0;
+  --ink-dim: #9aa5b9;
+  --ink-faint: #6b7589;
+  --selection: #434c5e;
+
+  --c-red: #bf616a;
+  --c-orange: #d08770;
+  --c-yellow: #ebcb8b;
+  --c-green: #a3be8c;
+  --c-cyan: #88c0d0;
+  --c-blue: #81a1c1;
+  --c-violet: #b48ead;
+  --c-magenta: #c98ebc;
+  --accent: #88c0d0;
+}
+
+/* Gruvbox Dark — the warm retro terminal, bright variants. */
+[data-theme="gruvbox-dark"] {
+  --paper: #282828;
+  --paper-raised: #32302f;
+  --paper-sunken: #1d2021;
+  --rule: #504945;
+  --ink: #ebdbb2;
+  --ink-dim: #a89984;
+  --ink-faint: #7c6f64;
+  --selection: #504945;
+
+  --c-red: #fb4934;
+  --c-orange: #fe8019;
+  --c-yellow: #fabd2f;
+  --c-green: #b8bb26;
+  --c-cyan: #8ec07c;
+  --c-blue: #83a598;
+  --c-violet: #d3869b;
+  --c-magenta: #f084ae;
+  --accent: #83a598;
+}
+
+/* Tokyo Night — deep indigo with neon accents. */
+[data-theme="tokyo-night"] {
+  --paper: #1a1b26;
+  --paper-raised: #20212e;
+  --paper-sunken: #16161e;
+  --rule: #2f334d;
+  --ink: #c0caf5;
+  --ink-dim: #9aa5ce;
+  --ink-faint: #565f89;
+  --selection: #33467c;
+
+  --c-red: #f7768e;
+  --c-orange: #ff9e64;
+  --c-yellow: #e0af68;
+  --c-green: #9ece6a;
+  --c-cyan: #7dcfff;
+  --c-blue: #7aa2f7;
+  --c-violet: #9d7cd8;
+  --c-magenta: #bb9af7;
+  --accent: #7aa2f7;
+}
+
+/* Catppuccin Mocha — the dark flavour of the pastel palette. */
+[data-theme="catppuccin-mocha"] {
+  --paper: #1e1e2e;
+  --paper-raised: #252538;
+  --paper-sunken: #181825;
+  --rule: #313244;
+  --ink: #cdd6f4;
+  --ink-dim: #a6adc8;
+  --ink-faint: #7f849c;
+  --selection: #45475a;
+
+  --c-red: #f38ba8;
+  --c-orange: #fab387;
+  --c-yellow: #f9e2af;
+  --c-green: #a6e3a1;
+  --c-cyan: #94e2d5;
+  --c-blue: #89b4fa;
+  --c-violet: #cba6f7;
+  --c-magenta: #f5c2e7;
+  --accent: #89b4fa;
+}
+
+/* Rosé Pine — muted rose, gold and pine on near-black plum. */
+[data-theme="rose-pine"] {
+  --paper: #191724;
+  --paper-raised: #1f1d2e;
+  --paper-sunken: #131020;
+  --rule: #403d52;
+  --ink: #e0def4;
+  --ink-dim: #908caa;
+  --ink-faint: #6e6a86;
+  --selection: #403d52;
+
+  --c-red: #eb6f92;
+  --c-orange: #ebbcba;
+  --c-yellow: #f6c177;
+  --c-green: #a4c9a0;
+  --c-cyan: #9ccfd8;
+  --c-blue: #5ca7c4;
+  --c-violet: #c4a7e7;
+  --c-magenta: #e394bd;
+  --accent: #c4a7e7;
+}
+
+/* Contrast — black and white at AAA ratios, for low vision and glare. */
+[data-theme="contrast"] {
+  --paper: #000000;
+  --paper-raised: #0a0a0a;
+  --paper-sunken: #000000;
+  --rule: #5a5a5a;
+  --ink: #ffffff;
+  --ink-dim: #d0d0d0;
+  --ink-faint: #a8a8a8;
+  --selection: #2a4a7a;
+
+  --c-red: #ff6b6b;
+  --c-orange: #ffb35c;
+  --c-yellow: #ffe066;
+  --c-green: #6bff8f;
+  --c-cyan: #5ee8e8;
+  --c-blue: #7fb8ff;
+  --c-violet: #d0a8ff;
+  --c-magenta: #ff8fd0;
+  --accent: #7fb8ff;
+}
+
+/* Tangerine — peach paper with saturated, juicy ink. */
+[data-theme="tangerine"] {
+  --paper: #fff7ef;
+  --paper-raised: #ffffff;
+  --paper-sunken: #fdecd9;
+  --rule: #f1d6ba;
+  --ink: #2a1a10;
+  --ink-dim: #6e5240;
+  --ink-faint: #a08670;
+  --selection: #ffd8b0;
+
+  --c-red: #d7263d;
+  --c-orange: #e8620c;
+  --c-yellow: #a87a00;
+  --c-green: #2e8b3a;
+  --c-cyan: #0b8a9a;
+  --c-blue: #2457c5;
+  --c-violet: #7b3fc4;
+  --c-magenta: #c2187a;
+  --accent: #e8620c;
+}
+
+/* Sorbet — pink-white with candy-bright accents. */
+[data-theme="sorbet"] {
+  --paper: #fdf5fa;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f6e6f1;
+  --rule: #ead0e2;
+  --ink: #2b1830;
+  --ink-dim: #6c5272;
+  --ink-faint: #a08aa4;
+  --selection: #f7cdea;
+
+  --c-red: #d6336c;
+  --c-orange: #e8590c;
+  --c-yellow: #a07a00;
+  --c-green: #2b8a3e;
+  --c-cyan: #0c8599;
+  --c-blue: #3b5bdb;
+  --c-violet: #7048e8;
+  --c-magenta: #c2255c;
+  --accent: #d6336c;
+}
+
+/* Ember — charred brown with glowing orange. Warm, vivid, the default dark. */
+[data-theme="ember"] {
+  --paper: #1b1210;
+  --paper-raised: #241814;
+  --paper-sunken: #140c0a;
+  --rule: #3b2720;
+  --ink: #f7e6d6;
+  --ink-dim: #c9a893;
+  --ink-faint: #8c705f;
+  --selection: #50301f;
+
+  --c-red: #ff6150;
+  --c-orange: #ff8f2e;
+  --c-yellow: #ffcc3d;
+  --c-green: #b8d84b;
+  --c-cyan: #52d3c6;
+  --c-blue: #6db3ff;
+  --c-violet: #c98fff;
+  --c-magenta: #ff62a5;
+  --accent: #ff8f2e;
+}
+
+/* Lava — red-black with molten reds and golds. */
+[data-theme="lava"] {
+  --paper: #170c0c;
+  --paper-raised: #211111;
+  --paper-sunken: #100707;
+  --rule: #3d1d1b;
+  --ink: #ffeae2;
+  --ink-dim: #d4a798;
+  --ink-faint: #92695f;
+  --selection: #5c2018;
+
+  --c-red: #ff4d3d;
+  --c-orange: #ff7b25;
+  --c-yellow: #ffc03c;
+  --c-green: #c4da4e;
+  --c-cyan: #55d7ca;
+  --c-blue: #72aaff;
+  --c-violet: #d290ff;
+  --c-magenta: #ff5290;
+  --accent: #ff4d3d;
+}
+
+/* Marigold — dark umber with saturated gold. */
+[data-theme="marigold"] {
+  --paper: #1a1508;
+  --paper-raised: #231c0c;
+  --paper-sunken: #120e05;
+  --rule: #3b3117;
+  --ink: #f6edd3;
+  --ink-dim: #c4b58c;
+  --ink-faint: #877b57;
+  --selection: #4f4116;
+
+  --c-red: #f2633f;
+  --c-orange: #f7a02b;
+  --c-yellow: #ffd43f;
+  --c-green: #aacd4b;
+  --c-cyan: #61c6b2;
+  --c-blue: #7aa9ea;
+  --c-violet: #c497e2;
+  --c-magenta: #f0719c;
+  --accent: #ffc21a;
+}
+
+/* Sunset — plum dusk, coral, pink and gold. */
+[data-theme="sunset"] {
+  --paper: #1f1424;
+  --paper-raised: #29192f;
+  --paper-sunken: #170e1b;
+  --rule: #40284a;
+  --ink: #fbe8e1;
+  --ink-dim: #cca8ba;
+  --ink-faint: #8f7088;
+  --selection: #532c55;
+
+  --c-red: #ff5c7a;
+  --c-orange: #ff9152;
+  --c-yellow: #ffd166;
+  --c-green: #9ee57c;
+  --c-cyan: #5fe0d6;
+  --c-blue: #7da9ff;
+  --c-violet: #c994ff;
+  --c-magenta: #ff6ad5;
+  --accent: #ff7a59;
+}
+
+/* Carnival — ink-blue night with every colour at full strength. */
+[data-theme="carnival"] {
+  --paper: #12101f;
+  --paper-raised: #1a1730;
+  --paper-sunken: #0c0a17;
+  --rule: #2d2952;
+  --ink: #edecff;
+  --ink-dim: #aba8d8;
+  --ink-faint: #6f6ba0;
+  --selection: #383270;
+
+  --c-red: #ff4f6d;
+  --c-orange: #ff9f43;
+  --c-yellow: #fde047;
+  --c-green: #4ade80;
+  --c-cyan: #22d3ee;
+  --c-blue: #60a5fa;
+  --c-violet: #a78bfa;
+  --c-magenta: #f472b6;
+  --accent: #f472b6;
+}
+
+/* Synthwave — purple neon, retro arcade. */
+[data-theme="synthwave"] {
+  --paper: #1a1033;
+  --paper-raised: #23173f;
+  --paper-sunken: #130a27;
+  --rule: #3c2a68;
+  --ink: #f6eaff;
+  --ink-dim: #bba5df;
+  --ink-faint: #7e6aa8;
+  --selection: #4b2e7c;
+
+  --c-red: #fe4450;
+  --c-orange: #ff8b39;
+  --c-yellow: #fede5d;
+  --c-green: #72f1b8;
+  --c-cyan: #36f9f6;
+  --c-blue: #6c9cff;
+  --c-violet: #c792ea;
+  --c-magenta: #ff7edb;
+  --accent: #ff7edb;
+}
+
+/* Lagoon — deep teal water, tropical brights. */
+[data-theme="lagoon"] {
+  --paper: #0e1a1d;
+  --paper-raised: #132428;
+  --paper-sunken: #0a1416;
+  --rule: #213c42;
+  --ink: #e3f7f4;
+  --ink-dim: #9dc6c1;
+  --ink-faint: #608b87;
+  --selection: #214e54;
+
+  --c-red: #ff6b6b;
+  --c-orange: #ffa94d;
+  --c-yellow: #ffe066;
+  --c-green: #69db7c;
+  --c-cyan: #3bc9db;
+  --c-blue: #74c0fc;
+  --c-violet: #b197fc;
+  --c-magenta: #f783ac;
+  --accent: #ffa94d;
+}
+
+/* Monokai — Wimer Hazenberg's vivid classic. */
+[data-theme="monokai"] {
+  --paper: #272822;
+  --paper-raised: #2f302a;
+  --paper-sunken: #1e1f1c;
+  --rule: #3e3d32;
+  --ink: #f8f8f2;
+  --ink-dim: #b8b6a6;
+  --ink-faint: #75715e;
+  --selection: #49483e;
+
+  --c-red: #f92672;
+  --c-orange: #fd971f;
+  --c-yellow: #e6db74;
+  --c-green: #a6e22e;
+  --c-cyan: #66d9ef;
+  --c-blue: #78a9ff;
+  --c-violet: #ae81ff;
+  --c-magenta: #ff6ac1;
+  --accent: #a6e22e;
+}
+
+/* Dracula — Zeno Rocha's purple-grey with candy brights. */
+[data-theme="dracula"] {
+  --paper: #282a36;
+  --paper-raised: #303241;
+  --paper-sunken: #21222c;
+  --rule: #44475a;
+  --ink: #f8f8f2;
+  --ink-dim: #c0c1d1;
+  --ink-faint: #7c86b4;
+  --selection: #44475a;
+
+  --c-red: #ff5555;
+  --c-orange: #ffb86c;
+  --c-yellow: #f1fa8c;
+  --c-green: #50fa7b;
+  --c-cyan: #8be9fd;
+  --c-blue: #82a6ff;
+  --c-violet: #bd93f9;
+  --c-magenta: #ff79c6;
+  --accent: #bd93f9;
+}
+
+/* The four below are shader-editor's, in this vocabulary. */
+
+/* Midnight — blue-black with One Dark's hues; shader-editor's default. */
+[data-theme="midnight"] {
+  --paper: #0d0f14;
+  --paper-raised: #13161e;
+  --paper-sunken: #1a1e28;
+  --rule: #2a2f3d;
+  --ink: #abb2bf;
+  --ink-dim: #8b93a1;
+  --ink-faint: #5c6370;
+  --selection: #5c8af738;
+
+  --c-red: #e06c75;
+  --c-orange: #d19a66;
+  --c-yellow: #e5c07b;
+  --c-green: #98c379;
+  --c-cyan: #56b6c2;
+  --c-blue: #61afef;
+  --c-violet: #7c5cf7;
+  --c-magenta: #c678dd;
+  --accent: #5c8af7;
+}
+
+/* Everforest — forest greens, soft contrast. */
+[data-theme="everforest"] {
+  --paper: #272e33;
+  --paper-raised: #2d353b;
+  --paper-sunken: #343f44;
+  --rule: #475258;
+  --ink: #d3c6aa;
+  --ink-dim: #9da9a0;
+  --ink-faint: #859289;
+  --selection: #a7c08038;
+
+  --c-red: #e67e80;
+  --c-orange: #e69875;
+  --c-yellow: #dbbc7f;
+  --c-green: #a7c080;
+  --c-cyan: #83c092;
+  --c-blue: #7fbbb3;
+  --c-violet: #d699b6;
+  --c-magenta: #e67e80;
+  --accent: #a7c080;
+}
+
+/* Paper — GitHub's light palette. */
+[data-theme="paper"] {
+  --paper: #ffffff;
+  --paper-raised: #f6f8fa;
+  --paper-sunken: #eaeef2;
+  --rule: #d0d7de;
+  --ink: #1f2328;
+  --ink-dim: #656d76;
+  --ink-faint: #6e7781;
+  --selection: #0969da2e;
+
+  --c-red: #cf222e;
+  --c-orange: #953800;
+  --c-yellow: #9a6700;
+  --c-green: #1a7f37;
+  --c-cyan: #1b7c83;
+  --c-blue: #0969da;
+  --c-violet: #8250df;
+  --c-magenta: #bf3989;
+  --accent: #0969da;
+}
+
+/* Ayu Light — pale grey, warm oranges. */
+[data-theme="ayu-light"] {
+  --paper: #fcfcfc;
+  --paper-raised: #f3f4f5;
+  --paper-sunken: #e9eaeb;
+  --rule: #d2d5d9;
+  --ink: #5c6166;
+  --ink-dim: #787b80;
+  --ink-faint: #8a9199;
+  --selection: #399ee62e;
+
+  --c-red: #f07171;
+  --c-orange: #fa8d3e;
+  --c-yellow: #f2ae49;
+  --c-green: #86b300;
+  --c-cyan: #55b4d4;
+  --c-blue: #399ee6;
+  --c-violet: #a37acc;
+  --c-magenta: #ed9366;
+  --accent: #399ee6;
+}

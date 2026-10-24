@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- `resizes-content` makes an on-screen keyboard shrink the layout instead
+         of covering the editor; `viewport-fit=cover` hands the notch area to
+         the safe-area insets in styles.css. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>Typst Editor</title>
+    <script>
+      // iOS Safari zooms the page into any text field under 16px when it is
+      // focused, and leaves it zoomed, which would rule out small editor
+      // text on a phone. `maximum-scale=1` switches that off; since iOS 10
+      // Safari ignores it for pinch-zoom, so nothing is lost. Added only on
+      // iOS because Android Chrome would honour it and lose pinch-zoom.
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+        var viewport = document.querySelector('meta[name="viewport"]');
+        viewport.content += ", maximum-scale=1";
+      }
+    </script>
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Typst" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <script>
+      // Offline support; sw.js is generated at deploy time by pwa/build.mjs.
+      if ("serviceWorker" in navigator) {
+        addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+      }
+    </script>
+    <meta
+      name="description"
+      content="A Typst editor that compiles in your browser — nothing leaves your machine."
+    />
+    <script>
+      // Applied before first paint so the page never flashes the wrong theme.
+      // Mirrors `resolveTheme` in theme.ts; kept tiny and dependency-free.
+      try {
+        var stored = JSON.parse(localStorage.getItem("typsteditor.settings.v1") || "{}");
+        var preference = stored.theme || "system";
+        var id =
+          preference === "system"
+            ? window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? stored.darkTheme || "nocturne"
+              : stored.lightTheme || "chalk"
+            : preference;
+        document.documentElement.dataset.theme = id;
+      } catch (error) {
+        document.documentElement.dataset.theme = "nocturne";
+      }
+    </script>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <span class="wordmark">Typst</span>
+
+      <!-- Only shown on narrow screens, where the panes take turns. -->
+      <div class="segmented view-switch" role="group" aria-label="Show">
+        <button id="show-source" class="btn" type="button" aria-pressed="true">
+          Source
+        </button>
+        <button id="show-preview" class="btn" type="button" aria-pressed="false">
+          Preview
+        </button>
+      </div>
+
+      <div class="group">
+        <button
+          id="documents-toggle"
+          class="btn btn-primary btn-documents"
+          type="button"
+          data-documents-toggle
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          title="Documents: save, open, export, share (Ctrl/⌘ + S saves)"
+        >
+          <span id="document-name">Untitled</span><span class="caret" aria-hidden="true">▾</span>
+        </button>
+      </div>
+
+      <div class="spacer"></div>
+
+      <button id="new-window" class="btn wide-only" type="button" title="Open another window: preview, problems or reference (Alt + W)">Window</button>
+
+      <button
+        id="settings-toggle"
+        class="btn"
+        type="button"
+        data-panel-toggle
+        aria-haspopup="dialog"
+        aria-expanded="false"
+      >
+        Settings
+      </button>
+    </header>
+
+    <main class="panes" id="main">
+      <section class="pane editor-pane" id="editor-pane" aria-label="Source">
+        <div class="float-bar" id="editor-bar">
+          <span class="grip-dots"></span>
+          <span class="float-title">Source</span>
+          <button class="win-btn" id="editor-dock" type="button" title="Dock the editor back into the split (or double-click this bar)">Dock</button>
+        </div>
+        <div class="tabrow">
+          <div id="tabs" class="tabs" role="tablist" aria-label="Project files"></div>
+          <button
+            id="editor-undock"
+            class="win-btn"
+            type="button"
+            title="Undock the editor into a floating window"
+            aria-label="Undock editor"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1 4.5V11h6.5M4 1h7v7H4z"/></svg>
+          </button>
+        </div>
+        <div id="editor" class="editor-host"></div>
+        <div id="binary-view" class="binary-view" hidden></div>
+      </section>
+      <div
+        id="divider"
+        class="divider"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        aria-label="Resize panes"
+      ></div>
+      <section id="dock" class="pane pane-dock" aria-label="Windows"></section>
+    </main>
+
+    <footer class="statusbar">
+      <output id="status" class="status-message" data-kind="working"
+        >Loading the compiler…</output
+      >
+      <span id="status-main" class="status-meta"></span>
+      <span id="status-position" class="status-meta"></span>
+      <span id="status-pages" class="status-meta"></span>
+    </footer>
+
+    <div
+      id="settings-panel"
+      class="panel"
+      role="dialog"
+      aria-label="Settings"
+      hidden
+    ></div>
+
+    <div id="documents-panel" class="panel panel-documents" role="dialog" aria-label="Documents" hidden></div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

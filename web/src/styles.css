@@ -1,0 +1,1749 @@
+@import "./themes.css";
+
+/*
+ * The interface is set in the same faces the compiler typesets with: the
+ * wordmark and panel headings in Libertinus Serif, data and labels in DejaVu
+ * Sans Mono. Both are already fetched by the worker, so the browser serves
+ * them from cache and the page makes no extra requests.
+ */
+@font-face {
+  font-family: "Libertinus Serif Web";
+  src: url("/fonts/LibertinusSerif-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Libertinus Serif Web";
+  src: url("/fonts/LibertinusSerif-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DejaVu Sans Mono Web";
+  src: url("/fonts/DejaVuSansMono.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --serif: "Libertinus Serif Web", Georgia, "Times New Roman", serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DejaVu Sans Mono Web", ui-monospace, monospace;
+
+  /* Overwritten from `settings.ts`; these are only the pre-hydration values. */
+  --editor-font: var(--mono);
+  --editor-size: 14px;
+  --editor-leading: 1.6;
+  --split: 0.46;
+  /* The undocked editor's background, from Settings → Layout. */
+  --glass-a: 1;
+  --glass-blur: 0px;
+
+  --radius: 7px;
+  --radius-lg: 12px;
+  --speed: 130ms;
+  --ease: cubic-bezier(0.2, 0, 0.13, 1);
+}
+
+/*
+ * Syntax roles, mapped onto the active theme's palette exactly once.
+ *
+ * Bound to `[data-theme]` rather than `:root` so the mapping resolves wherever
+ * a palette is applied — on `<html>` for the app, and on the theme chips in
+ * settings, which carry their own palette in a subtree.
+ */
+[data-theme] {
+  --tok-comment: var(--ink-faint);
+  --tok-punctuation: var(--ink-dim);
+  --tok-escape: var(--c-orange);
+  --tok-link: var(--c-blue);
+  --tok-raw: var(--c-cyan);
+  --tok-label: var(--c-violet);
+  --tok-ref: var(--c-violet);
+  --tok-heading: var(--c-blue);
+  --tok-marker: var(--c-orange);
+  --tok-math: var(--c-cyan);
+  --tok-keyword: var(--c-magenta);
+  --tok-operator: var(--ink-dim);
+  --tok-number: var(--c-orange);
+  --tok-string: var(--c-green);
+  --tok-function: var(--c-blue);
+  --tok-interpolated: var(--c-blue);
+  --tok-error: var(--c-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --speed: 1ms;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* The app never scrolls as a whole, so a pull at the top of a pane must not
+   turn into pull-to-refresh and reload the editor mid-sentence. */
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* Where the on-screen keyboard overlays the page rather than resizing it
+   (iOS ignores `interactive-widget`), `fitVisualViewport` in main.ts pins the
+   app to the part that is still visible. */
+body.keyboard-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--viewport-top, 0px);
+  height: var(--viewport-height, 100%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Controls ---------------------------------------------------------------- */
+
+.btn {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 7px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color var(--speed) var(--ease),
+    color var(--speed) var(--ease),
+    background var(--speed) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised));
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+  font-weight: 550;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 84%, var(--ink));
+  border-color: transparent;
+  color: var(--paper);
+}
+
+.btn-icon {
+  padding: 7px 9px;
+  min-width: 32px;
+}
+
+/* A connected run of buttons, e.g. the zoom stepper. */
+.segmented {
+  display: flex;
+}
+
+.segmented .btn {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.segmented .btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+  margin-left: 0;
+}
+
+.segmented .btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.segmented .btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, var(--paper-raised));
+  border-color: var(--accent);
+  color: var(--accent);
+  position: relative;
+  z-index: 1;
+}
+
+/* Toolbar ----------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: calc(9px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+    9px max(14px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-raised);
+  flex: none;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding-right: 4px;
+  user-select: none;
+}
+
+.group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Shown only on narrow screens; see the media query at the end. */
+.narrow-only,
+.view-switch {
+  display: none;
+}
+
+.zoom-readout {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  min-width: 4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Panes ------------------------------------------------------------------- */
+
+.panes {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+
+.panes.swapped { flex-direction: row-reverse; }
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-pane {
+  flex: 0 0 calc(var(--split) * 100%);
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The dock: docked windows stack in it, top to bottom, sharing the height. */
+.pane-dock {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-sunken);
+}
+
+/* With nothing docked, or the editor floating, the other side takes the width. */
+.panes.dock-empty .pane-dock,
+.panes.dock-empty .divider,
+.panes.editor-floating .divider { display: none; }
+
+.panes.dock-empty .editor-pane:not(.floating) { flex: 1 1 auto; }
+
+.panes.dock-empty.editor-floating::after {
+  content: "Nothing docked — dock a window or the editor from its bar";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 10.5px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.tabrow {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunken);
+}
+
+.tabrow .tabs { flex: 1 1 auto; min-width: 0; border-bottom: none; }
+.tabrow > .win-btn { align-self: center; margin: 0 6px 0 2px; }
+.editor-pane.floating #editor-undock { display: none; }
+
+/* Windows ----------------------------------------------------------------- */
+/* One kind of window for everything beside the editor: a bar (what it shows,
+   dock/undock, close) over a body. Docked, it stacks in the dock pane;
+   floating, it is a fixed box on <body> with inline left/top/width/height. */
+
+.win {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.win.docked { flex: 1 1 0; }
+.win.docked + .win.docked { border-top: 1px solid var(--rule); }
+
+.floating {
+  position: fixed;
+  z-index: 15;
+  flex: none !important;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 34px rgb(0 0 0 / 0.28);
+  overflow: hidden;
+}
+
+.floating.moving { box-shadow: 0 18px 54px rgb(0 0 0 / 0.4); }
+.floating:not(.moving) { transition: box-shadow var(--speed) var(--ease); }
+.floating.pop { animation: float-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@keyframes float-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.win-bar,
+.float-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;              /* BAR_H in windows.ts */
+  padding: 0 6px 0 10px;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--rule);
+  font: 10.5px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  touch-action: none;
+  user-select: none;
+}
+
+.float-bar { display: none; }
+.editor-pane.floating > .float-bar { display: flex; cursor: grab; }
+.win.floating > .win-bar { cursor: grab; }
+.floating.moving > .win-bar, .floating.moving > .float-bar { cursor: grabbing; }
+
+.grip-dots {
+  flex: none;
+  width: 14px;
+  height: 10px;
+  background: radial-gradient(circle, var(--ink-faint) 1px, transparent 1.2px) 0 0 / 5px 5px;
+  opacity: 0.7;
+}
+
+.win.docked .grip-dots { display: none; }
+.float-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win-bar .spacer { margin-left: auto; }
+
+.win-select {
+  width: auto;
+  padding: 1px 4px;
+  font: 11.5px var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.win-select:hover { border-color: var(--rule); background: var(--paper-raised); }
+
+.win-btn {
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-dim);
+  font: 11px var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.win-btn:hover:not(:disabled) { color: var(--ink); background: var(--paper-raised); border-color: var(--rule); }
+.win-btn:disabled { opacity: 0.4; cursor: default; }
+
+.win-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Resize handles: invisible, generous hit areas inside the floating box. */
+.fh { display: none; }
+/* Above CodeMirror's panels (vim status line, search: 300), which would otherwise cover the bottom edge. */
+.floating > .fh { display: block; position: absolute; z-index: 310; touch-action: none; }
+.fh-n  { top: 0;    left: 8px;  right: 8px;   height: 8px; cursor: ns-resize; }
+.fh-s  { bottom: 0; left: 8px;  right: 8px;   height: 8px; cursor: ns-resize; }
+.fh-w  { left: 0;   top: 8px;   bottom: 8px;  width: 8px;  cursor: ew-resize; }
+.fh-e  { right: 0;  top: 8px;   bottom: 8px;  width: 8px;  cursor: ew-resize; }
+.fh-nw { top: 0;    left: 0;   width: 14px; height: 14px; cursor: nwse-resize; }
+.fh-se { bottom: 0; right: 0;  width: 14px; height: 14px; cursor: nwse-resize; }
+.fh-ne { top: 0;    right: 0;  width: 14px; height: 14px; cursor: nesw-resize; }
+.fh-sw { bottom: 0; left: 0;   width: 14px; height: 14px; cursor: nesw-resize; }
+
+.fh-se::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--ink-faint);
+  border-bottom: 2px solid var(--ink-faint);
+  border-radius: 0 0 2px 0;
+  opacity: 0.6;
+}
+
+.floating:hover .fh-se::after { opacity: 1; }
+
+/* Snap guides: a line where a dragged window edge has stuck. */
+.snap-guide { display: none; position: fixed; z-index: 14; background: var(--accent); opacity: 0.6; pointer-events: none; }
+.snap-guide.snap-x { top: 0; bottom: 0; width: 1px; }
+.snap-guide.snap-y { left: 0; right: 0; height: 1px; }
+
+/* Glass: the undocked editor's backgrounds go see-through (Settings → Layout). */
+.editor-pane.floating.glass {
+  background: color-mix(in srgb, var(--paper) calc(var(--glass-a) * 100%), transparent);
+}
+
+.editor-pane.floating.glass-frost {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.editor-pane.floating.glass > .float-bar,
+.editor-pane.floating.glass .tabrow,
+.editor-pane.floating.glass .tabs,
+.editor-pane.floating.glass .tab,
+.editor-pane.floating.glass .cm-editor,
+.editor-pane.floating.glass .cm-editor .cm-gutters,
+.editor-pane.floating.glass .cm-editor .cm-panels,
+.editor-pane.floating.glass .cm-editor .cm-vim-panel {
+  background: transparent;
+}
+
+/* The Problems window: the last compile's diagnostics, one per row. */
+.problems {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  font-size: 12.5px;
+  user-select: text;
+}
+
+.problem {
+  display: flex;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+}
+
+.problem:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.problem-where { font: 11px var(--mono); color: var(--ink-faint); white-space: nowrap; }
+.problem[data-severity="error"] .problem-where { color: var(--c-red); }
+.problem[data-severity="warning"] .problem-where { color: var(--c-yellow); }
+.problem-message { flex: 1; min-width: 0; line-height: 1.45; }
+.problem-hint { color: var(--ink-dim); font-size: 11.5px; margin-top: 2px; }
+.problems-empty { padding: 14px 12px; color: var(--ink-faint); font-style: italic; }
+
+/* The reference: shortcuts, windows and a Typst crib sheet. */
+.reference {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 14px 20px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  user-select: text;
+}
+
+.reference h3 { margin: 12px 0 6px; font-family: var(--serif); font-size: 15px; font-weight: 600; }
+.reference h3:first-child { margin-top: 2px; }
+.reference p { margin: 6px 0; color: var(--ink-dim); }
+.reference a { color: var(--accent); }
+.reference code { font: 11.5px var(--mono); }
+.reference table { border-collapse: collapse; width: 100%; margin: 4px 0 8px; }
+.reference th { text-align: left; vertical-align: top; font: 11.5px var(--mono); color: var(--accent); padding: 3px 10px 3px 0; white-space: nowrap; }
+.reference td { vertical-align: top; padding: 3px 0; color: var(--ink-dim); }
+.reference tr + tr th, .reference tr + tr td { border-top: 1px solid var(--rule); }
+
+.editor-host {
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-host[hidden] {
+  display: none;
+}
+
+/* Tabs -------------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  flex: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--rule);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding-right: 4px;
+  background: var(--paper-sunken);
+  border-right: 1px solid var(--rule);
+  color: var(--ink-dim);
+  transition: background var(--speed) var(--ease);
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper-sunken));
+}
+
+/* Reordering by drag: the moving tab fades, a bar marks where it lands. */
+.tab.dragging { opacity: 0.4; }
+.tab.drop-before { box-shadow: inset 2px 0 0 var(--accent); }
+.tab.drop-after { box-shadow: inset -2px 0 0 var(--accent); }
+.tab[data-active="true"].drop-before { box-shadow: inset 2px 0 0 var(--accent), inset 0 2px 0 var(--accent); }
+.tab[data-active="true"].drop-after { box-shadow: inset -2px 0 0 var(--accent), inset 0 2px 0 var(--accent); }
+
+.tab[data-active="true"] {
+  background: var(--paper);
+  color: var(--ink);
+  /* The active tab reads as part of the editor below it. */
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.tab-name {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 4px 7px 11px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Files the editor cannot open are dimmed rather than italicised: a synthetic
+   italic mangles a filename, and dimming reads as "not editable" anyway. */
+.tab[data-kind="binary"] .tab-name {
+  color: var(--ink-faint);
+}
+
+.tab-badge {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  user-select: none;
+}
+
+.tab-action {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 5px;
+  margin-left: 2px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--speed) var(--ease),
+    color var(--speed) var(--ease);
+}
+
+/* Revealed on hover or focus so the tab strip stays quiet while writing. */
+.tab:hover .tab-action,
+.tab:focus-within .tab-action {
+  opacity: 1;
+}
+
+.tab-action:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.tab-close:hover {
+  color: var(--c-red);
+}
+
+.tab-add {
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  flex: none;
+}
+
+.tab-add:hover {
+  color: var(--accent);
+}
+
+/* Binary files ------------------------------------------------------------ */
+
+.binary-view {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  padding: 28px;
+}
+
+.binary-view[hidden] {
+  display: none;
+}
+
+.binary-card {
+  margin: auto;
+  text-align: center;
+  max-width: 100%;
+}
+
+.binary-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.binary-size {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin: 0 0 16px;
+}
+
+.binary-preview {
+  max-width: 100%;
+  max-height: 46vh;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: white;
+}
+
+.binary-hint {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin: 16px 0 0;
+  word-break: break-all;
+}
+
+.divider {
+  background: var(--rule);
+  cursor: col-resize;
+  position: relative;
+  /* A drag on a touch screen would otherwise scroll or zoom the page. */
+  touch-action: none;
+  transition: background var(--speed) var(--ease);
+}
+
+/* A hairline is correct visually but impossible to grab, so the hit area is
+   widened without widening the line. */
+.divider::after {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+}
+
+.divider:hover,
+.divider.dragging {
+  background: var(--accent);
+}
+
+.preview-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--paper-sunken);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  /* `safe` matters once the page is zoomed wider than the pane: plain
+     centering would push the left edge out of reach of the scrollbar. */
+  align-items: safe center;
+  gap: 22px;
+  overscroll-behavior: contain;
+  /* Pinch-zoom is handled by `Preview`, which re-lays out the pages rather
+     than magnifying the whole app. */
+  touch-action: pan-x pan-y;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+/* Page layouts (the preview window's bar, or Settings → Preview). The
+   column gap doubles as the two-up gutter the width fit allows for. */
+.preview-pane[data-layout="double"],
+.preview-pane[data-layout="book"] {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: safe center;
+  align-content: start;
+  column-gap: 22px;
+  row-gap: 22px;
+}
+
+/* A book opens on its first page alone, on the right. */
+.preview-pane[data-layout="book"] .sheet:first-child { grid-column: 2; }
+
+.preview-pane[data-layout="wrap"] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: safe center;
+  align-items: start;
+  align-content: start;
+}
+
+.preview-pane .preview-empty { grid-column: 1 / -1; }
+
+/* A preview window's controls: one toggle unfolds a strip of fit, zoom and
+   layout buttons sideways. Small glyphs, the active one lit; nothing else. */
+.win-tools { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.win-strip { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.win-strip-body { display: flex; align-items: center; gap: 6px; }
+.win-strip-body[hidden] { display: none; }
+.win-seg { display: flex; align-items: center; }
+.win-seg .win-btn { padding: 0 5px; border-radius: 0; }
+.win-seg .win-btn:first-child { border-radius: 4px 0 0 4px; }
+.win-seg .win-btn:last-child { border-radius: 0 4px 4px 0; }
+.win-tools .win-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.win-readout { font: 10.5px var(--mono); color: var(--ink-faint); min-width: 4ch; padding: 0 3px; letter-spacing: 0; }
+.win-strip-toggle.active { color: var(--ink); }
+
+.page {
+  background: white;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.08),
+    0 2px 10px rgb(0 0 0 / 0.16);
+  line-height: 0;
+}
+
+.page svg {
+  display: block;
+}
+
+/* Preview-only: leaves the exported PDF untouched. */
+.dim-page .page {
+  filter: invert(0.91) hue-rotate(180deg);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.4);
+}
+
+.page-caption {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.preview-empty {
+  margin: auto;
+  max-width: 34ch;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Footer ------------------------------------------------------------------ */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 max(14px, env(safe-area-inset-right))
+    env(safe-area-inset-bottom) max(14px, env(safe-area-inset-left));
+  height: calc(30px + env(safe-area-inset-bottom));
+  flex: none;
+  overflow: hidden;
+  border-top: 1px solid var(--rule);
+  background: var(--paper-raised);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-message {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-message[data-kind="error"] {
+  color: var(--c-red);
+}
+
+.status-message[data-kind="working"] {
+  color: var(--ink-faint);
+}
+
+.status-meta {
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* Documents button and panel ---------------------------------------------- */
+
+.btn-documents {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+}
+
+.btn-documents #document-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-documents.dirty #document-name::after { content: " •"; color: var(--accent); }
+.btn-documents .caret { font-size: 10px; color: var(--ink-faint); }
+
+.panel-documents { left: 14px; right: auto; }
+
+.field-state { text-transform: none; letter-spacing: 0; color: var(--accent); }
+
+.name-input {
+  font: inherit;
+  font-size: 14px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.name-input:focus { outline: none; border-color: var(--accent); }
+
+.inline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.inline-end { margin-top: 10px; justify-content: flex-end; }
+
+.doc-list { display: flex; flex-direction: column; gap: 3px; max-height: 40vh; overflow-y: auto; }
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.doc-row:hover { background: var(--paper); border-color: var(--rule); }
+.doc-row.current { border-color: var(--accent); }
+.dr-main { flex: 1; min-width: 0; }
+.dr-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dr-meta { font: 11px var(--mono); color: var(--ink-faint); margin-top: 2px; }
+.dr-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--speed) var(--ease); }
+.doc-row:hover .dr-actions, .doc-row:focus-within .dr-actions { opacity: 1; }
+
+.dr-btn {
+  font: 13px var(--sans);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+
+.dr-btn:hover { color: var(--ink); background: var(--paper-raised); border-color: var(--rule); }
+.dr-btn.dr-danger:hover { color: var(--c-red); }
+.slider { width: 120px; accent-color: var(--accent); }
+
+@media (pointer: coarse) { .dr-actions { opacity: 1; } }
+
+/* Settings panel ---------------------------------------------------------- */
+
+.panel {
+  position: fixed;
+  top: 52px;
+  right: 14px;
+  width: 330px;
+  max-height: calc(100vh - 92px);
+  max-height: calc(100dvh - 92px);
+  overflow-y: auto;
+  /* Above every floating window (windows.ts numbers those from 50) and CodeMirror's own panels. */
+  z-index: 400;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: 0 10px 34px rgb(0 0 0 / 0.22);
+  animation: panel-in var(--speed) var(--ease);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  margin: 0 0 14px;
+  font-weight: 400;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 7px;
+}
+
+.field-note {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+
+select {
+  font: inherit;
+  font-size: 13px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* The theme picker folds to one line showing the theme in use. */
+.theme-picker > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius);
+}
+
+.theme-picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.theme-picker > summary .field-label {
+  margin-bottom: 0;
+}
+
+.theme-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.theme-current::after {
+  content: "▸";
+  font-size: 11px;
+  color: var(--ink-faint);
+  transition: transform var(--speed) var(--ease);
+}
+
+.theme-picker[open] .theme-current::after {
+  transform: rotate(90deg);
+}
+
+.theme-picker > summary:hover .theme-current {
+  color: var(--accent);
+}
+
+.theme-picker[open] > summary {
+  margin-bottom: 10px;
+}
+
+.theme-swatch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.theme-swatch > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+
+.rack-label {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin: 12px 0 6px;
+}
+
+/* The theme rack: each chip is a sheet of that theme's paper, showing its ink
+   and accent rather than naming colours in the abstract. */
+.rack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.chip {
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition:
+    border-color var(--speed) var(--ease),
+    transform var(--speed) var(--ease);
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.chip-face {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1;
+  padding: 9px 9px 7px;
+  color: var(--ink);
+}
+
+.chip-rule {
+  height: 4px;
+  background: var(--accent);
+}
+
+.chip-name {
+  display: block;
+  font-size: 10.5px;
+  padding: 5px 6px;
+  color: var(--ink-dim);
+  background: var(--paper-raised);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip[aria-pressed="true"] .chip-name {
+  color: var(--accent);
+}
+
+/* A row with a label on the left and a control on the right. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--rule);
+}
+
+.row-label {
+  font-size: 13px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stepper-value {
+  font-family: var(--mono);
+  font-size: 12px;
+  min-width: 5ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An accessible switch built on a real checkbox. */
+.switch {
+  position: relative;
+  width: 38px;
+  height: 21px;
+  flex: none;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  background: var(--rule);
+  transition: background var(--speed) var(--ease);
+  pointer-events: none;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--paper-raised);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  transition: transform var(--speed) var(--ease);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--accent);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(17px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Toast ------------------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  bottom: calc(44px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100vw - 40px));
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 0.24);
+  font-size: 13px;
+  z-index: 450;
+  animation: panel-in var(--speed) var(--ease);
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+/* Editor -----------------------------------------------------------------
+ *
+ * CodeMirror ships a light base theme, and any surface left unstyled shows
+ * through as a pale patch on a dark theme — the lint gutter and the search
+ * panel are the usual offenders. Every surface it can paint is named here.
+ */
+
+.cm-editor {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--editor-size);
+}
+
+.cm-editor .cm-scroller {
+  font-family: var(--editor-font);
+  line-height: var(--editor-leading);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-editor .cm-content {
+  caret-color: var(--ink);
+  padding: 10px 0;
+}
+
+.cm-editor .cm-gutters {
+  background: var(--paper);
+  color: var(--ink-faint);
+  border-right: 1px solid var(--rule);
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  padding: 0 10px 0 14px;
+  min-width: 3ch;
+}
+
+.cm-editor .cm-gutter-lint {
+  width: 14px;
+}
+
+.cm-editor .cm-gutter-lint .cm-gutterElement {
+  padding: 0;
+}
+
+.cm-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  color: var(--ink-dim);
+}
+
+.cm-editor .cm-cursor,
+.cm-editor .cm-dropCursor {
+  border-left-color: var(--ink);
+  border-left-width: 2px;
+}
+
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+  background: var(--selection);
+}
+
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: var(--selection);
+}
+
+.cm-editor .cm-selectionMatch {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.cm-editor .cm-searchMatch {
+  background: color-mix(in srgb, var(--c-yellow) 30%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--c-yellow) 60%, transparent);
+}
+
+.cm-editor .cm-searchMatch-selected {
+  background: color-mix(in srgb, var(--c-orange) 45%, transparent);
+}
+
+.cm-editor .cm-matchingBracket,
+.cm-editor .cm-nonmatchingBracket {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: none;
+}
+
+.cm-editor .cm-panels,
+.cm-editor .cm-panel {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.cm-editor .cm-panel input,
+.cm-editor .cm-panel button {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+/* Autocomplete and hover docs --------------------------------------------- */
+
+.cm-tooltip-autocomplete {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--editor-font);
+  font-size: 13px;
+  max-height: 17em;
+}
+
+.cm-tooltip-autocomplete > ul > li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 10px;
+  color: var(--ink);
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--ink);
+}
+
+.cm-completionLabel {
+  flex: none;
+}
+
+.cm-completionMatchedText {
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.cm-completionDetail {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 28ch;
+}
+
+/* A symbol's glyph is the point of it, so it is shown at readable size. */
+.cm-completionIcon-typst-symbol + .cm-completionLabel + .cm-completionDetail {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.completion-docs,
+.hover-docs {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 44ch;
+  padding: 9px 11px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.hover-docs pre {
+  font-family: var(--editor-font);
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.cm-tooltip.cm-completionInfo {
+  border-left: 1px solid var(--rule);
+  max-height: 20em;
+  overflow-y: auto;
+}
+
+/* Vim mode's status line, which otherwise arrives with browser defaults. */
+.cm-editor .cm-vim-panel {
+  background: var(--paper-raised);
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.cm-editor .cm-vim-panel input {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+.cm-editor .cm-fat-cursor {
+  background: var(--accent) !important;
+  color: var(--paper) !important;
+}
+
+.cm-editor:not(.cm-focused) .cm-fat-cursor {
+  background: none !important;
+  outline: 1px solid var(--accent) !important;
+}
+
+.cm-tooltip {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.24);
+}
+
+.cm-tooltip.cm-tooltip-arrow::before,
+.cm-tooltip.cm-tooltip-arrow::after {
+  border-top-color: var(--rule);
+  border-bottom-color: var(--rule);
+}
+
+.cm-tooltip .cm-diagnostic {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  padding: 7px 9px;
+  border-left-width: 3px;
+}
+
+.cm-tooltip .cm-diagnostic-error {
+  border-left-color: var(--c-red);
+}
+
+.cm-tooltip .cm-diagnostic-warning {
+  border-left-color: var(--c-yellow);
+}
+
+.cm-editor .cm-lintRange-error {
+  background: none;
+  text-decoration: underline wavy var(--c-red);
+  text-underline-offset: 3px;
+}
+
+.cm-editor .cm-lintRange-warning {
+  background: none;
+  text-decoration: underline wavy var(--c-yellow);
+  text-underline-offset: 3px;
+}
+
+/* Typst highlighting tags, named after `typst_syntax::Tag`. */
+.tok-comment {
+  color: var(--tok-comment);
+  font-style: italic;
+}
+.tok-punctuation {
+  color: var(--tok-punctuation);
+}
+.tok-escape {
+  color: var(--tok-escape);
+}
+.tok-strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tok-emph {
+  font-style: italic;
+}
+.tok-link {
+  color: var(--tok-link);
+  text-decoration: underline;
+}
+.tok-raw {
+  color: var(--tok-raw);
+}
+.tok-label {
+  color: var(--tok-label);
+}
+.tok-ref {
+  color: var(--tok-ref);
+}
+.tok-heading {
+  color: var(--tok-heading);
+  font-weight: 650;
+}
+.tok-list-marker,
+.tok-list-term {
+  color: var(--tok-marker);
+}
+.tok-math-delimiter,
+.tok-math-operator,
+.tok-math-grouping-parens {
+  color: var(--tok-math);
+}
+.tok-keyword {
+  color: var(--tok-keyword);
+}
+.tok-operator {
+  color: var(--tok-operator);
+}
+.tok-number {
+  color: var(--tok-number);
+}
+.tok-string {
+  color: var(--tok-string);
+}
+.tok-function {
+  color: var(--tok-function);
+}
+.tok-interpolated {
+  color: var(--tok-interpolated);
+}
+.tok-error {
+  color: var(--tok-error);
+}
+
+/* Narrow screens ----------------------------------------------------------
+ *
+ * The panes take turns, switched from the toolbar. Side by side neither is
+ * wide enough to use, and stacked neither is tall enough once the on-screen
+ * keyboard is up.
+ */
+
+@media (max-width: 720px) {
+  /* Everything docks (windows.ts mirrors this query); the switch in the
+     toolbar shows the editor or the dock, never both. */
+  .panes, .panes.swapped { flex-direction: column; }
+  .editor-pane { flex: 1 1 auto; }
+  #editor-undock { display: none; }
+
+  .divider,
+  body:not(.show-preview) .pane-dock,
+  body.show-preview .editor-pane {
+    display: none;
+  }
+
+  .panes.dock-empty.editor-floating::after { display: none; }
+  .btn-documents { max-width: 110px; }
+
+  .wordmark,
+  .zoom-readout,
+  .wide-only {
+    display: none;
+  }
+
+  .view-switch {
+    display: flex;
+  }
+
+  .narrow-only {
+    display: inline;
+  }
+
+  .toolbar {
+    gap: 6px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    overflow-x: auto;
+  }
+
+  .toolbar .btn:not(.btn-icon) {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .preview-pane {
+    padding: 14px 12px 40px;
+    gap: 14px;
+  }
+
+  .statusbar {
+    gap: 10px;
+  }
+
+  .status-meta {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}
+
+/* The smallest phones still fit the toolbar on one line without scrolling. */
+@media (max-width: 359px) {
+  .toolbar .btn:not(.btn-icon) {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .toolbar {
+    gap: 4px;
+  }
+}
+
+/* Touch screens -----------------------------------------------------------
+ *
+ * Finger-sized targets, and no text field under 16px: iOS zooms the page into
+ * a smaller one when it gains focus and does not zoom back out. The editor's
+ * own text is held at 16px by `applyTypography`.
+ */
+
+@media (pointer: coarse) {
+  button {
+    touch-action: manipulation;
+  }
+
+  .btn {
+    min-height: 40px;
+  }
+
+  .btn-icon {
+    min-width: 40px;
+  }
+
+  .panel {
+    top: calc(64px + env(safe-area-inset-top));
+    max-height: calc(100vh - 104px - env(safe-area-inset-top));
+    max-height: calc(100dvh - 104px - env(safe-area-inset-top));
+  }
+
+  select,
+  .cm-editor .cm-panel input,
+  .cm-editor .cm-vim-panel input {
+    font-size: 16px;
+  }
+
+  select {
+    min-height: 40px;
+  }
+
+  .row {
+    padding: 9px 0;
+  }
+
+  /* The switch keeps its size; its checkbox reaches past it to take the tap. */
+  .switch input {
+    inset: -10px -8px;
+  }
+
+  .tab-name {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .tab-action {
+    align-self: stretch;
+    padding: 0 8px;
+    min-width: 34px;
+  }
+
+  .tab-add {
+    padding: 0 16px;
+  }
+
+  .win-btn {
+    min-width: 36px;
+    min-height: 32px;
+    justify-content: center;
+  }
+
+  .divider::after {
+    inset: 0 -12px;
+  }
+
+  .cm-tooltip-autocomplete > ul > li {
+    padding: 9px 12px;
+  }
+}
+
+/* Nothing can hover, so the tab actions would stay invisible. */
+@media (hover: none) {
+  .tab-action {
+    opacity: 1;
+  }
+}
+
+/* A phone on its side with the keyboard up leaves a strip a few lines tall.
+   The writing gets all of it; the bars come back with the keyboard gone. */
+@media (pointer: coarse) and (max-height: 300px) {
+  .toolbar,
+  .statusbar {
+    display: none;
+  }
+}
